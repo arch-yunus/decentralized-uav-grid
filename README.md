@@ -16,11 +16,9 @@ Geleneksel havacılık sistemlerindeki "Merkez-Uç" (Hub-and-Spoke) mimarileri, 
 
 DUG, salt bir yazılım projesi olmanın ötesinde; Türkiye'nin son dönemde uygulamaya koyduğu **81 İlde Drone Seferberliği** ve yeni **Topyekûn Savunma** konseptine sivil Ar-Ge ekosisteminden sunulan stratejik bir teknoloji konseptidir. 
 
-Modern savaş sahasında hantal zırhlıların yerini akıllı ve otonom sistemlerin aldığı bu dönemde, DUG mimarisi aşağıdaki askeri/sivil entegrasyon hedeflerine hizmet eder:
-
-*   **Dağıtık Üretim ve Operasyon Sinerjisi:** 81 ile dağıtılan üretim tesislerinden çıkacak farklı tipteki droneların (sabit kanat, döner kanat, kamikaze), tek bir standart ağ üzerinde birbirlerini tanıyarak ortak hareket edebilmesi hedeflenmiştir.
-*   **Kısıtlı Donanımda Maksimum Otonomi (Edge-AI):** Milyonlarca drone'un her birine pahalı ve ağır işlemciler takmak ekonomik olarak sürdürülemez. DUG, veri işleme yükünü optimize ederek algoritmaların uç cihazlarda (Edge-AI) çalışmasını sağlar; böylece düşük maliyetli donanımlarla yüksek zeka elde edilir.
-*   **Elektronik Harp (EH) Direnci:** Ağa dışarıdan gelen hiçbir veriye güvenmeyen "Zero-Trust" yaklaşımı ve frekans atlamalı mesh iletişim protokolleri sayesinde, sinyal kesicilerin (Jammer) olduğu yoğun harp ortamlarında bile sürünün sağırlaşmasını engeller.
+*   **Dağıtık Üretim ve Operasyon Sinerjisi:** 81 ile dağıtılan üretim tesislerinden çıkacak farklı tipteki droneların tek bir standart ağ üzerinde birbirlerini tanıyarak ortak hareket edebilmesi.
+*   **Kısıtlı Donanımda Maksimum Otonomi (Edge-AI):** DUG, veri işleme yükünü optimize ederek algoritmaların uç cihazlarda (Nvidia Jetson, Raspberry Pi vb.) çalışmasını sağlar.
+*   **Elektronik Harp (EH) Direnci:** Ağa dışarıdan gelen verilere güvenmeyen "Zero-Trust" yaklaşımı ve dinamik mesh routing ile Jammer etkilerine karşı dayanıklılık.
 
 ---
 
@@ -28,96 +26,115 @@ Modern savaş sahasında hantal zırhlıların yerini akıllı ve otonom sisteml
 
 Mimari yapı, donanımdan bağımsız çalışabilmesi için ROS2 (Robot Operating System) üzerinde modüler olarak tasarlanmıştır:
 
-### Katmanlı Yapı
+### Katmanlı Yapı (Cross-Node Communication)
 
 ```mermaid
 graph TD
-    subgraph "UAV 1 (Edge Node)"
-        A1[Fiziksel/MAVLink Katmanı] --> B1[Otonomi Katmanı - dug_core]
-        B1 --> C1[Görü Katmanı - dug_vision]
-        B1 <--> D1[Haberleşme Katmanı - dug_communication]
+    subgraph "UAV i (Swarm Member)"
+        MAV[Fiziksel/MAVLink Katmanı] <--> CORE[dug_core]
+        CORE <--> COMM[dug_communication]
+        CORE <--> VIS[dug_vision]
+        
+        subgraph "Internal Logic"
+            LDR[Dynamic Leader Selection]
+            FORM[Formation Controller]
+            SYNC[Target Sync]
+        end
+        CORE --- LDR
+        CORE --- FORM
+        CORE --- SYNC
     end
     
-    subgraph "UAV 2 (Edge Node)"
-        A2[Fiziksel/MAVLink Katmanı] --> B2[Otonomi Katmanı - dug_core]
-        B2 --> C2[Görü Katmanı - dug_vision]
-        B2 <--> D2[Haberleşme Katmanı - dug_communication]
+    subgraph "Global Swarm Mesh"
+        COMM <--> Peer1[UAV j]
+        COMM <--> Peer2[UAV k]
     end
-
-    D1 <-- Mesh Network / B.A.T.M.A.N. Adv --> D2
 ```
 
-1.  **Fiziksel ve Uçuş Katmanı:** Standart MAVLink protokolü üzerinden her türlü uçuş dengeleyicisiyle (Pixhawk vb.) iletişim kurulan, motor ve sensör verilerinin alındığı temel katmandır.
-2.  **Otonomi Katmanı (dug_core):** Dinamik lider seçimi, formasyon kontrolü ve görev yönetimi algoritmalarının koşturulduğu beyin katmanıdır.
-3.  **Mesh Haberleşme Katmanı (dug_communication):** Her İHA'nın bir router olduğu, merkezi olmayan ağ yönetim katmanıdır.
-
 ---
 
-## 📦 Paket Tanımları
+## 📦 Paket Tanımları ve Özellikleri
 
-| Paket | Dil | Açıklama |
+| Paket | Teknoloji | Temel Görevler |
 | :--- | :--- | :--- |
-| `dug_msgs` | C++/Py | Sürü durum ve hedef bilgisi için özel ROS2 arayüzleri. |
-| `dug_core` | C++ | Lider seçimi ve otonom karar mekanizması. |
-| `dug_vision` | Python | Edge-AI destekli görsel nesne tespiti ve takibi. |
-| `dug_communication` | Python | Mesh ağ sağlığı izleme ve P2P veri transferi. |
-| `dug_simulation` | Python | Çoklu İHA simülasyonu ve test senaryoları. |
+| `dug_msgs` | ROS2 Interfaces | `SwarmState`, `TargetInfo`, `FormationState` mesaj tanımları. |
+| `dug_core` | C++ 17 | Lider seçimi, Diamond formasyon kontrolü, Görev senkronizasyonu. |
+| `dug_vision` | Python / OpenCV | Gerçek zamanlı hedef tespiti ve koordinat kestirimi. |
+| `dug_communication` | Python / B.A.T.M.A.N. | Zero-Trust el sıkışma, Mesh ağ sağlığı takibi. |
+| `dug_simulation` | ROS2 Launch | Gazebo & PX4 SITL tabanlı çoklu İHA test ortamı. |
 
 ---
 
-## 🧠 Algoritmalar ve Yaklaşımlar
+## 🧠 Gelişmiş Özellikler (Advanced Features)
 
-### Dinamik Lider Seçimi (Dynamic Leader Selection)
-DUG, merkezi bir "Sürü Lideri" (Swarm Leader) atamaz. Bunun yerine, sürü içindeki her bir İHA, ağ üzerinden gelen verileri değerlendirerek **gerçek zamanlı liderlik oylaması** yapar.
-*   **Kriterler:** En yüksek pil seviyesi, en düşük donanım yükü ve benzersiz İHA ID'si.
-*   **Self-Healing:** Mevcut lider vurulursa veya bağlantısı koparsa, milisaniyeler içinde yeni bir lider otomatik olarak seçilir.
+### 1. Dinamik Formasyon Kontrolü
+Lider seçilen İHA, sürünün geri kalanına formasyon tipini (`Diamond`, `Square`, `V-Shape`) yayınlar. Takipçi İHA'lar, liderin konumuna göre kendi ID'lerini kullanarak dinamik ofset hesaplar:
+*   **Ofset Hesabı:** `x_cmd = leader_x + offset_x(id)`, `y_cmd = leader_y + offset_y(id)`
+*   **Offboard Kontrol:** Hesaplanan koordinatlar MAVROS üzerinden doğrudan uçuş denetleyicisine iletilir.
 
-### Zero-Trust Haberleşme
-Ağa dahil olan her yeni İHA, kriptografik el sıkışma (handshake) yöntemiyle doğrulanır. Doğrulanmamış hiçbir verinin otonomi katmanına sızmasına izin verilmez.
+### 2. Zero-Trust Handshake (Güvenli Katılım)
+Ağa katılan her yeni düğüm, `dug_communication` tarafından bir doğrulama sürecinden geçirilir:
+*   **Verification:** Sadece önceden tanımlanmış kriptografik anahtarlara veya ID aralıklarına sahip düğümler "Trusted" statüsü alır.
+*   **Isolation:** Güvenilmeyen düğümlerden gelen konum veya hedef verileri sürü tarafından reddedilir.
+
+### 3. Dağıtık Hedef Takibi (Distributed Tracking)
+Sürüdeki tek bir İHA'nın hedef tespit etmesi, tüm sürünün o hedefi "görmesi" demektir.
+*   **Sync Logic:** Tespit edilen hedefler `/swarm/targets` kanalından yayınlanır ve her İHA kendi yerel listesini günceller.
 
 ---
 
-## 🛠 Kurulum ve Test (Ubuntu 22.04 LTS)
+## 🚀 Donanım Gereksinimleri (Önerilen)
 
-Sistemi yerel ortamınızda test etmek için aşağıdaki adımları izleyin:
+*   **Uçuş Bilgisayarı:** Nvidia Jetson Orin Nano veya Raspberry Pi 4/5.
+*   **Uçuş Denetleyicisi:** Pixhawk 6C / Orange Cube (PX4 veya ArduPilot yazılımı ile).
+*   **Haberleyme:** Alfa AWUS036ACM (Mesh destekli Wi-Fi adaptörü) veya RF Mesh modemler.
+*   **Sensörler:** OAK-D Lite (Derinlik kameralı hedef tespiti için).
 
+---
+
+## 🛠 Kurulum ve Çalıştırma
+
+### Bağımlılıkların Kurulumu
+Sistemi hazır hale getirmek için Ubuntu 22.04 üzerinde:
 ```bash
-# Repoyu bilgisayarınıza klonlayın
 git clone https://github.com/arch-yunus/decentralized-uav-grid.git
 cd decentralized-uav-grid
-
-# Gerekli ROS2 bağımlılıklarını ve MAVLink paketlerini kurun
 chmod +x scripts/setup_env.sh
 ./scripts/setup_env.sh
+```
 
-# Çalışma alanını (Workspace) derleyin
+### Derleme ve Başlatma
+```bash
 colcon build --symlink-install
 source install/setup.bash
+
+# 10 İHA'lı sürü simülasyonu
+ros2 launch dug_simulation tactical_swarm.launch.py drone_count:=10
 ```
 
-### Simülasyonu Başlatma
+---
 
-Gazebo ortamında 5 İHA'lık otonom bir sürüyü test etmek için:
+## 🧪 Test Senaryoları
 
-```bash
-ros2 launch dug_simulation tactical_swarm.launch.py drone_count:=5
-```
+1.  **Lider Kaybı Testi:** Simülasyonda lider İHA'nın düğümünü (node) kapatın. Takipçilerin milisaniyeler içinde yeni bir lider seçtiğini gözlemleyin.
+2.  **Formasyon Testi:** Liderin konumunu değiştirin, takipçilerin Diamond dizilimini koruyarak lideri takip ettiğini doğrulayın.
+3.  **Hedef Paylaşımı:** Bir İHA'nın kamerasından (veya mock verisinden) hedef bilgisi girin, tüm İHA loglarında "New global target synchronized" mesajını kontrol edin.
 
 ---
 
 ## 🗺 Geliştirme Yol Haritası (Roadmap)
 
-- [x] **Aşama 1:** ROS2 Haberleşme mimarisi ve MAVROS entegrasyonu.
-- [x] **Aşama 2:** Dinamik lider seçimi ve sürü durum senkronizasyonu.
-- [ ] **Aşama 3:** Edge-AI destekli görsel hedef tespit modülünün (`dug_vision`) otonomi katmanına derin entegrasyonu.
-- [ ] **Aşama 4:** Donanım seviyesinde frekans atlamalı (FHSS) mesh testleri.
+- [x] **Faz 1:** Merkeziyetsiz lider seçimi ve temel mesh haberleşmesi.
+- [x] **Faz 2:** Dinamik formasyon ve sürü hedef senkronizasyonu.
+- [ ] **Faz 3:** Engelden kaçınma (Obstacle Avoidance) ve VFH+ entegrasyonu.
+- [ ] **Faz 4:** LTE/5G üzerinden geniş alan mesh köprüleme.
 
 ---
 
 ## 🤝 Katkıda Bulunma
 
-Bu proje açık kaynak topluluğuna aittir. Hata düzeltmeleri, yeni özellik talepleri veya dokümantasyon iyileştirmeleri için Pull Request (PR) göndermekten çekinmeyin. Katkı sağlamadan önce lütfen `CONTRIBUTING.md` yönergelerini okuyun.
+Proje akademik ve endüstriyel katkılara açıktır. Lütfen `CONTRIBUTING.md` dosyasını inceleyin.
 
 ## 📄 Lisans
 
-Decentralized UAV Grid (DUG) projesi **MIT Lisansı** altında açık kaynak olarak dağıtılmaktadır. Detaylar için `LICENSE` dosyasına bakınız.
+Bu proje **MIT Lisansı** ile lisanslanmıştır. Akademik atıf yapılması önerilir.
