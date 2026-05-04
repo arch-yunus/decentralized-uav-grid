@@ -179,6 +179,16 @@ Merkeziyetsiz ağ yapısının teknik referansları:
 *   **ETH Zurich - IDSC:** Prof. Raffaello D'Andrea'nın sürü dinamikleri üzerine öncü dersleri.
 *   **University of Pennsylvania - GRASP Lab:** Vijay Kumar'ın mikro-İHA sürüleri üzerine çalışmaları.
 
+### 6. Açık Kaynak Kod Repoları ve Teknik Raporlar
+Sürü zekası ve merkeziyetsiz kontrol mekanizmalarını derinlemesine incelemek için aşağıdaki repolar ve raporlar "altın standart" kabul edilir:
+
+*   **[ZJU-FAST-Lab / EGO-Swarm](https://github.com/ZJU-FAST-Lab/EGO-Swarm):** Merkeziyetsiz sürü navigasyonu için dünyadaki en popüler ve gelişmiş repolardan biridir.
+*   **[USC-ACTLab / Crazyswarm](https://github.com/USC-ACTLab/crazyswarm):** Yüzlerce drone'un senkronize uçuşu için Python/ROS tabanlı kapsamlı bir framework.
+*   **[SinuoLiu / Swarm-RL](https://github.com/SinuoLiu/Swarm-RL):** Takviyeli öğrenme (Reinforcement Learning) ile sürü kontrolü üzerine derinlemesine kodlar.
+*   **[PX4 / Swarm-Obstacle-Avoidance](https://github.com/PX4/PX4-Avoidance):** Sürü içi ve dışı engellerden kaçınma için PX4 resmi algoritmaları.
+*   **[Technical Report: DARPA OFFSET](https://www.darpa.mil/program/offensive-swarm-enabled-tactics):** Kentsel operasyonlar için sürü taktikleri ve operasyonel dökümantasyon.
+*   **[B.A.T.M.A.N. Adv Whitepaper](https://www.open-mesh.org/projects/batman-adv/wiki/Docu):** Mesh ağlarının teorik temelleri ve yönlendirme protokolü teknik raporu.
+
 ---
 
 ## 🤝 Katkıda Bulunma
