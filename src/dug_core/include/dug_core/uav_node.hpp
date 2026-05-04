@@ -6,6 +6,9 @@
 #include <mavros_msgs/msg/state.hpp>
 #include <dug_msgs/msg/swarm_state.hpp>
 #include <dug_msgs/msg/target_info.hpp>
+#include <dug_msgs/msg/mission_command.hpp>
+#include <dug_msgs/msg/obstacle_distance.hpp>
+#include "dug_core/vfh_planner.hpp"
 
 namespace dug_core
 {
@@ -22,6 +25,8 @@ private:
   void swarm_callback(const dug_msgs::msg::SwarmState::SharedPtr msg);
   void target_callback(const dug_msgs::msg::TargetInfo::SharedPtr msg);
   void formation_callback(const dug_msgs::msg::FormationState::SharedPtr msg);
+  void obstacle_callback(const dug_msgs::msg::ObstacleDistance::SharedPtr msg);
+  void mission_callback(const dug_msgs::msg::MissionCommand::SharedPtr msg);
   void timer_callback();
 
   // Helper functions
@@ -34,6 +39,8 @@ private:
   rclcpp::Subscription<dug_msgs::msg::SwarmState>::SharedPtr swarm_sub_;
   rclcpp::Subscription<dug_msgs::msg::TargetInfo>::SharedPtr target_sub_;
   rclcpp::Subscription<dug_msgs::msg::FormationState>::SharedPtr formation_sub_;
+  rclcpp::Subscription<dug_msgs::msg::ObstacleDistance>::SharedPtr obstacle_sub_;
+  rclcpp::Subscription<dug_msgs::msg::MissionCommand>::SharedPtr mission_sub_;
 
   // Publishers
   rclcpp::Publisher<dug_msgs::msg::SwarmState>::SharedPtr swarm_pub_;
@@ -53,6 +60,10 @@ private:
   std::map<uint32_t, dug_msgs::msg::SwarmState> swarm_members_;
   std::vector<dug_msgs::msg::TargetInfo> global_targets_;
   dug_msgs::msg::FormationState current_formation_;
+  dug_msgs::msg::MissionCommand current_mission_;
+  
+  VfhPlanner vfh_planner_;
+  std::vector<float> latest_obstacles_;
 };
 
 } // namespace dug_core

@@ -28,6 +28,12 @@ UavNode::UavNode()
   formation_sub_ = this->create_subscription<dug_msgs::msg::FormationState>(
     "/swarm/formation", 10, std::bind(&UavNode::formation_callback, this, std::placeholders::_1));
 
+  obstacle_sub_ = this->create_subscription<dug_msgs::msg::ObstacleDistance>(
+    "/swarm/obstacles", 10, std::bind(&UavNode::obstacle_callback, this, std::placeholders::_1));
+
+  mission_sub_ = this->create_subscription<dug_msgs::msg::MissionCommand>(
+    "/swarm/mission", 10, std::bind(&UavNode::mission_callback, this, std::placeholders::_1));
+
   // Publishers
   swarm_pub_ = this->create_publisher<dug_msgs::msg::SwarmState>("/swarm/status", 10);
   formation_pub_ = this->create_publisher<dug_msgs::msg::FormationState>("/swarm/formation", 10);
@@ -76,6 +82,17 @@ void UavNode::formation_callback(const dug_msgs::msg::FormationState::SharedPtr 
   current_formation_ = *msg;
 }
 
+void UavNode::obstacle_callback(const dug_msgs::msg::ObstacleDistance::SharedPtr msg)
+{
+  latest_obstacles_ = msg->distances;
+}
+
+void UavNode::mission_callback(const dug_msgs::msg::MissionCommand::SharedPtr msg)
+{
+  current_mission_ = *msg;
+  RCLCPP_INFO(this->get_logger(), "New mission received: %s", msg->command.c_str());
+}
+
 void UavNode::timer_callback()
 {
   // Update and publish own status
@@ -119,8 +136,31 @@ void UavNode::perform_formation_control()
     float offset_x = (uav_id_ % 2 == 0) ? 5.0 : -5.0;
     float offset_y = (uav_id_ > 2) ? 5.0 : -5.0;
 
-    cmd.pose.position.x = leader_pose.pose.position.x + offset_x;
-    cmd.pose.position.y = leader_pose.pose.position.y + offset_y;
+    float target_x = leader_pose.pose.position.x + offset_x;
+    float target_y = leader_pose.pose.position.y + offset_y;
+
+    // --- VFH+ Obstacle Avoidance Integration ---
+    float current_x = current_pose_.pose.position.x;
+    float current_y = current_pose_.pose.position.y;
+    
+    // Calculate heading towards target
+    float target_heading = std::atan2(target_y - current_y, target_x - current_x);
+    if (target_heading < 0) target_heading += 2.0 * M_PI;
+    
+    if (!latest_obstacles_.empty()) {
+      float increment = 2.0 * M_PI / latest_obstacles_.size();
+      float safe_heading = vfh_planner_.compute_safe_heading(target_heading, latest_obstacles_, increment);
+      
+      // Move towards safe heading
+      float speed = 1.5; 
+      cmd.pose.position.x = current_x + speed * std::cos(safe_heading);
+      cmd.pose.position.y = current_y + speed * std::sin(safe_heading);
+    } else {
+      cmd.pose.position.x = target_x;
+      cmd.pose.position.y = target_y;
+    }
+    // -------------------------------------------
+
     cmd.pose.position.z = leader_pose.pose.position.z;
 
     cmd_pose_pub_->publish(cmd);
