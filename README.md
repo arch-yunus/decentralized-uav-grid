@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="Decentralized UAV Grid Banner" width="100%">
+</p>
+
 # 🛸 Decentralized UAV Grid (DUG)
 
 ![Version](https://img.shields.io/badge/version-1.0.0--alpha-blue.svg)
