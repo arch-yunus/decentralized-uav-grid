@@ -1,0 +1,4 @@
+uint32 uav_id
+bool is_leader
+float32 battery_percentage
+geometry_msgs/PoseStamped current_pose

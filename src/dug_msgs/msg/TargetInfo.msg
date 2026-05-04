@@ -1,0 +1,4 @@
+uint32 target_id
+string target_type
+float32 confidence
+geometry_msgs/Point target_location
