@@ -141,6 +141,26 @@ ros2 launch dug_simulation tactical_swarm.launch.py drone_count:=10
 
 ---
 
+## 📚 Kaynakça ve Benzer Projeler
+
+Bu proje geliştirilirken yararlanılan temel kaynaklar ve dünyadaki benzer açık kaynaklı sürü zekası çalışmaları aşağıdadır:
+
+### Akademik ve Teknik Altyapı
+*   **PX4 Autopilot:** Modern İHA'lar için endüstri standardı açık kaynaklı uçuş kontrol yazılımı. [px4.io](https://px4.io/)
+*   **MAVSDK:** MAVLink tabanlı araçlarla yüksek seviyeli dil (C++/Py) üzerinden konuşmayı sağlayan güçlü kütüphane. [mavsdk.mavlink.io](https://mavsdk.mavlink.io/)
+*   **B.A.T.M.A.N. Advanced:** Linux kernel seviyesinde çalışan, İHA'lar için optimize edilmiş mesh routing protokolü. [open-mesh.org](https://www.open-mesh.org/)
+
+### Benzer Açık Kaynaklı Projeler
+*   **EGO-Swarm:** Merkezi olmayan, çarpışmadan kaçınan ve otonom navigasyon odaklı sürü sistemi. [GitHub Link](https://github.com/ZJU-FAST-Lab/EGO-Swarm)
+*   **Crazyswarm:** Bitcraze Crazyflie platformu üzerinde çalışan, yüzlerce minyatür İHA'yı kontrol edebilen sürü altyapısı. [crazyswarm.com](https://crazyswarm.com/)
+*   **Swarm-ROS2:** ROS2 tabanlı sürü simülasyonları ve formasyon kontrolü için bir topluluk çalışması. [GitHub Link](https://github.com/arplaboratory/swarm_ros2)
+
+### İlham Veren Yarışmalar ve Platformlar
+*   **TEKNOFEST Sürü İHA Yarışması:** Türkiye'deki sürü zekası çalışmalarının en büyük vitrini ve teknik kural seti sağlayıcısı. [teknofest.org](https://www.teknofest.org/)
+*   **DARPA OFFSET (OFFensive Swarm-Enabled Tactics):** Şehir içi operasyonlar için sürü taktikleri üzerine yapılan öncü çalışmalar.
+
+---
+
 ## 🤝 Katkıda Bulunma
 
 Bu proje Türkiye'nin teknolojik bağımsızlığına katkı sunmayı amaçlayan bir Ar-Ge çalışmasıdır. Katkılarınız için `CONTRIBUTING.md` dosyasına göz atın.
