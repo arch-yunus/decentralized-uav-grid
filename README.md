@@ -141,23 +141,43 @@ ros2 launch dug_simulation tactical_swarm.launch.py drone_count:=10
 
 ---
 
-## 📚 Kaynakça ve Benzer Projeler
+## 📚 Kaynakça, Literatür ve Ekosistem
 
-Bu proje geliştirilirken yararlanılan temel kaynaklar ve dünyadaki benzer açık kaynaklı sürü zekası çalışmaları aşağıdadır:
+Decentralized UAV Grid (DUG), dünya genelindeki sürü robotiği literatürü ve endüstriyel standartlar üzerine inşa edilmiştir. Bu bölüm, projenin dayandığı derin teknik kökleri ve benzer çalışmaları detaylandırır.
 
-### Akademik ve Teknik Altyapı
-*   **PX4 Autopilot:** Modern İHA'lar için endüstri standardı açık kaynaklı uçuş kontrol yazılımı. [px4.io](https://px4.io/)
-*   **MAVSDK:** MAVLink tabanlı araçlarla yüksek seviyeli dil (C++/Py) üzerinden konuşmayı sağlayan güçlü kütüphane. [mavsdk.mavlink.io](https://mavsdk.mavlink.io/)
-*   **B.A.T.M.A.N. Advanced:** Linux kernel seviyesinde çalışan, İHA'lar için optimize edilmiş mesh routing protokolü. [open-mesh.org](https://www.open-mesh.org/)
+### 1. Sürü Zekası ve Kontrol Algoritmaları (SOTA)
+Projedeki lider seçimi ve formasyon kontrolü, aşağıdaki akademik yaklaşımlardan ilham almıştır:
+*   **Reynolds' Boids (Flocking):** Sürü hareketinin üç temel kuralı (Ayrılma, Hizalanma, Birleşme) üzerine kurulu temel model. [Craig Reynolds, 1987]
+*   **Consensus-Based Bundle Algorithm (CBBA):** Merkezi olmayan görev dağıtımı ve açık artırma usulü hedef paylaşımı için kullanılan standart algoritma.
+*   **Artificial Potential Fields (APF):** Engelden kaçınma ve sürü içi çarpışma önleme için kullanılan vektörel alan matematiği.
+*   **Fast-Planner / Ego-Planner:** ZJU FAST Lab tarafından geliştirilen, kısıtlı donanımlarda gerçek zamanlı yörünge planlama algoritmaları.
 
-### Benzer Açık Kaynaklı Projeler
-*   **EGO-Swarm:** Merkezi olmayan, çarpışmadan kaçınan ve otonom navigasyon odaklı sürü sistemi. [GitHub Link](https://github.com/ZJU-FAST-Lab/EGO-Swarm)
-*   **Crazyswarm:** Bitcraze Crazyflie platformu üzerinde çalışan, yüzlerce minyatür İHA'yı kontrol edebilen sürü altyapısı. [crazyswarm.com](https://crazyswarm.com/)
-*   **Swarm-ROS2:** ROS2 tabanlı sürü simülasyonları ve formasyon kontrolü için bir topluluk çalışması. [GitHub Link](https://github.com/arplaboratory/swarm_ros2)
+### 2. Simülasyon ve Validasyon Platformları
+DUG, geliştirme sürecinde farklı simülasyon derinliklerinden faydalanır:
+*   **Gazebo Classic & Ignition:** Fiziksel motoru ve ROS2 entegrasyonu ile sürü testlerinin ana merkezi.
+*   **PX4 SITL (Software In The Loop):** Uçuş kontrol yazılımının (firmware) birebir kodunun bilgisayarda koşturulması.
+*   **AirSim (Microsoft):** Fotogerçekçi ortamlar ve derin öğrenme (dug_vision) eğitimleri için yüksek kaliteli veri seti üretim alanı.
+*   **Flightmare:** Çok yüksek hızlı (agile) uçuşlar ve sürü dinamikleri için özelleşmiş simülatör.
 
-### İlham Veren Yarışmalar ve Platformlar
-*   **TEKNOFEST Sürü İHA Yarışması:** Türkiye'deki sürü zekası çalışmalarının en büyük vitrini ve teknik kural seti sağlayıcısı. [teknofest.org](https://www.teknofest.org/)
-*   **DARPA OFFSET (OFFensive Swarm-Enabled Tactics):** Şehir içi operasyonlar için sürü taktikleri üzerine yapılan öncü çalışmalar.
+### 3. Haberleşme ve Mesh Topolojileri
+Merkeziyetsiz ağ yapısının teknik referansları:
+*   **MAVLink Protokolü:** İHA dünyasının ortak dili. Mikro-servis mimarisi ile veri paketleme.
+*   **DDS (Data Distribution Service):** ROS2'nin omurgasını oluşturan, düşük gecikmeli ve gerçek zamanlı veri dağıtım katmanı.
+*   **IEEE 802.11s:** Wi-Fi mesh ağları için endüstriyel standart. B.A.T.M.A.N. Adv ile kernel seviyesinde entegrasyon.
+*   **FastDDS & CycloneDDS:** Sürü içi yüksek bant genişliği yönetimi için optimize edilmiş DDS implementasyonları.
+
+### 4. Küresel ve Yerel Sürü Projeleri
+*   **NASA SWARM (Swarmie):** Uzay araştırmaları ve kaynak toplama için geliştirilen dağıtık robot sürüleri.
+*   **Bitcraze Crazyswarm:** Kapalı alanlarda (Vicon/Optitrack altında) 49+ drone ile yapılan senkronize uçuş çalışmaları.
+*   **Bitbeamon Swarm:** Endüstriyel denetimler için mesh ağlı drone çözümleri.
+*   **Türkiye Ekosistemi:**
+    *   **Baykar & TUSAŞ:** Kızılelma, Akıncı ve ANKA-3 projelerindeki "kol uçuşu" ve "sadık kanat adamı" (Loyal Wingman) konseptleri.
+    *   **TEKNOFEST Teknik Şartnameleri:** Türkiye'deki sürü İHA çalışmalarının teknik olgunluk seviyesini belirleyen temel dökümantasyon seti.
+
+### 5. Eğitim ve Topluluk Kaynakları
+*   **PX4/Auterion Dev Summit:** Yıllık düzenlenen teknik konferanslar ve sunumlar.
+*   **ETH Zurich - IDSC:** Prof. Raffaello D'Andrea'nın sürü dinamikleri üzerine öncü dersleri.
+*   **University of Pennsylvania - GRASP Lab:** Vijay Kumar'ın mikro-İHA sürüleri üzerine çalışmaları.
 
 ---
 
