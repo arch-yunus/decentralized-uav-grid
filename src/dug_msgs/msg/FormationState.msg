@@ -1,0 +1,3 @@
+uint32 leader_id
+geometry_msgs/Point formation_center
+string formation_type

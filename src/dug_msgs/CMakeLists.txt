@@ -7,8 +7,9 @@ find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/SwarmState.msg"
-  "msg/TargetInfo.msg"
+  "msg/TargetInfo.msg"`r`n  "msg/FormationState.msg"
   DEPENDENCIES geometry_msgs
 )
 
 ament_package()
+

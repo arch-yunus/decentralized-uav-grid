@@ -22,8 +22,16 @@ UavNode::UavNode()
   swarm_sub_ = this->create_subscription<dug_msgs::msg::SwarmState>(
     "/swarm/status", 10, std::bind(&UavNode::swarm_callback, this, std::placeholders::_1));
 
+  target_sub_ = this->create_subscription<dug_msgs::msg::TargetInfo>(
+    "/swarm/targets", 10, std::bind(&UavNode::target_callback, this, std::placeholders::_1));
+
+  formation_sub_ = this->create_subscription<dug_msgs::msg::FormationState>(
+    "/swarm/formation", 10, std::bind(&UavNode::formation_callback, this, std::placeholders::_1));
+
   // Publishers
   swarm_pub_ = this->create_publisher<dug_msgs::msg::SwarmState>("/swarm/status", 10);
+  formation_pub_ = this->create_publisher<dug_msgs::msg::FormationState>("/swarm/formation", 10);
+  cmd_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>("mavros/setpoint_position/local", 10);
 
   // Timer for status publishing and leader selection (1Hz)
   timer_ = this->create_wall_timer(
@@ -47,6 +55,27 @@ void UavNode::swarm_callback(const dug_msgs::msg::SwarmState::SharedPtr msg)
   }
 }
 
+void UavNode::target_callback(const dug_msgs::msg::TargetInfo::SharedPtr msg)
+{
+  // Simple target synchronization
+  bool exists = false;
+  for (const auto & t : global_targets_) {
+    if (t.target_id == msg->target_id) {
+      exists = true;
+      break;
+    }
+  }
+  if (!exists) {
+    global_targets_.push_back(*msg);
+    RCLCPP_INFO(this->get_logger(), "New global target synchronized: %s", msg->target_type.c_str());
+  }
+}
+
+void UavNode::formation_callback(const dug_msgs::msg::FormationState::SharedPtr msg)
+{
+  current_formation_ = *msg;
+}
+
 void UavNode::timer_callback()
 {
   // Update and publish own status
@@ -60,6 +89,42 @@ void UavNode::timer_callback()
 
   // Perform dynamic leader selection
   select_leader();
+
+  // If leader, publish formation command
+  if (is_leader_) {
+    auto form_msg = dug_msgs::msg::FormationState();
+    form_msg.leader_id = uav_id_;
+    form_msg.formation_center = current_pose_.pose.position;
+    form_msg.formation_type = "Diamond";
+    formation_pub_->publish(form_msg);
+  }
+
+  // Execute formation control
+  perform_formation_control();
+}
+
+void UavNode::perform_formation_control()
+{
+  if (is_leader_) return; // Leader maintains own path
+
+  // Follower logic: maintain offset from leader
+  if (swarm_members_.count(current_formation_.leader_id)) {
+    auto leader_pose = swarm_members_[current_formation_.leader_id].current_pose;
+    
+    geometry_msgs::msg::PoseStamped cmd;
+    cmd.header.stamp = this->now();
+    cmd.header.frame_id = "map";
+    
+    // Simple offset based on UAV ID
+    float offset_x = (uav_id_ % 2 == 0) ? 5.0 : -5.0;
+    float offset_y = (uav_id_ > 2) ? 5.0 : -5.0;
+
+    cmd.pose.position.x = leader_pose.pose.position.x + offset_x;
+    cmd.pose.position.y = leader_pose.pose.position.y + offset_y;
+    cmd.pose.position.z = leader_pose.pose.position.z;
+
+    cmd_pose_pub_->publish(cmd);
+  }
 }
 
 void UavNode::select_leader()

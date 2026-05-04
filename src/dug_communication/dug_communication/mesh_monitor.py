@@ -17,17 +17,33 @@ class MeshMonitor(Node):
         self.get_logger().info('Mesh Monitor Node Started')
 
     def swarm_callback(self, msg):
-        self.peers[msg.uav_id] = self.get_clock().now()
+        # Zero-Trust Handshake Simulation
+        # In a real scenario, we would check cryptographic signatures here
+        is_trusted = self.verify_handshake(msg.uav_id)
+        
+        if is_trusted:
+            self.peers[msg.uav_id] = {
+                'last_seen': self.get_clock().now(),
+                'trusted': True
+            }
+        else:
+            self.get_logger().warning(f'Untrusted node attempted to join mesh: ID {msg.uav_id}')
+
+    def verify_handshake(self, uav_id):
+        # Simulation: only IDs less than 100 are trusted
+        return uav_id < 100
 
     def report_mesh_status(self):
         now = self.get_clock().now()
         # Remove peers not seen in last 5 seconds
-        active_peers = {pid: last_seen for pid, last_seen in self.peers.items() 
-                       if (now - last_seen).nanoseconds / 1e9 < 5.0}
+        active_peers = {pid: data for pid, data in self.peers.items() 
+                       if (now - data['last_seen']).nanoseconds / 1e9 < 5.0}
         
         self.peers = active_peers
         peer_count = len(self.peers)
-        self.get_logger().info(f'Active Mesh Nodes: {peer_count} | Peer IDs: {list(self.peers.keys())}')
+        trusted_count = sum(1 for data in self.peers.values() if data['trusted'])
+        
+        self.get_logger().info(f'Mesh Status | Nodes: {peer_count} | Trusted: {trusted_count} | IDs: {list(self.peers.keys())}')
 
 def main(args=None):
     rclpy.init(args=args)

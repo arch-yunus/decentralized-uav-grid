@@ -18,20 +18,27 @@ public:
 private:
   // Callbacks
   void state_callback(const mavros_msgs::msg::State::SharedPtr msg);
-  void pose_callback(const geometry_msgs::msg::Pose_stamped::SharedPtr msg);
+  void pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   void swarm_callback(const dug_msgs::msg::SwarmState::SharedPtr msg);
+  void target_callback(const dug_msgs::msg::TargetInfo::SharedPtr msg);
+  void formation_callback(const dug_msgs::msg::FormationState::SharedPtr msg);
   void timer_callback();
 
   // Helper functions
   void select_leader();
+  void perform_formation_control();
 
   // Subscriptions
   rclcpp::Subscription<mavros_msgs::msg::State>::SharedPtr state_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr pose_sub_;
   rclcpp::Subscription<dug_msgs::msg::SwarmState>::SharedPtr swarm_sub_;
+  rclcpp::Subscription<dug_msgs::msg::TargetInfo>::SharedPtr target_sub_;
+  rclcpp::Subscription<dug_msgs::msg::FormationState>::SharedPtr formation_sub_;
 
   // Publishers
   rclcpp::Publisher<dug_msgs::msg::SwarmState>::SharedPtr swarm_pub_;
+  rclcpp::Publisher<dug_msgs::msg::FormationState>::SharedPtr formation_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr cmd_pose_pub_;
 
   // Timers
   rclcpp::TimerBase::SharedPtr timer_;
@@ -44,6 +51,8 @@ private:
   geometry_msgs::msg::PoseStamped current_pose_;
   
   std::map<uint32_t, dug_msgs::msg::SwarmState> swarm_members_;
+  std::vector<dug_msgs::msg::TargetInfo> global_targets_;
+  dug_msgs::msg::FormationState current_formation_;
 };
 
 } // namespace dug_core
