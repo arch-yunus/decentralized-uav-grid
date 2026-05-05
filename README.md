@@ -56,6 +56,8 @@ graph TD
     LDR <--> BAT
     BAT <--> ZT
     FORM --> NAV
+    KMK[Kamikaze Engine] --> NAV
+    PYLD[Payload / Munition] --> MAV
     NAV --> MAV
     MAV -- GPS Lost --> VSLAM
 ```
