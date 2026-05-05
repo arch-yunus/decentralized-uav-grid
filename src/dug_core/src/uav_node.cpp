@@ -37,8 +37,12 @@ UavNode::UavNode()
   vslam_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
     "/swarm/vslam_pose", 10, std::bind(&UavNode::vslam_callback, this, std::placeholders::_1));
 
+  kamikaze_sub_ = this->create_subscription<dug_msgs::msg::KamikazeCommand>(
+    "/swarm/kamikaze", 10, std::bind(&UavNode::kamikaze_callback, this, std::placeholders::_1));
+
   gps_healthy_ = true;
   last_gps_time_ = this->now();
+  is_kamikaze_mode_ = false;
 
   // Publishers
   swarm_pub_ = this->create_publisher<dug_msgs::msg::SwarmState>("/swarm/status", 10);
@@ -106,6 +110,18 @@ void UavNode::vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr ms
   vslam_pose_ = *msg;
 }
 
+void UavNode::kamikaze_callback(const dug_msgs::msg::KamikazeCommand::SharedPtr msg)
+{
+  if (msg->armed) {
+    is_kamikaze_mode_ = true;
+    attack_target_ = msg->target_location;
+    payload_manager_.arm();
+    RCLCPP_WARN(this->get_logger(), "ATTACK MODE ENABLED! Datalogging Target: [%f, %f]", attack_target_.x, attack_target_.y);
+  } else {
+    is_kamikaze_mode_ = false;
+  }
+}
+
 void UavNode::timer_callback()
 {
   // GPS Health Check
@@ -145,7 +161,31 @@ void UavNode::timer_callback()
 
 void UavNode::perform_formation_control()
 {
-  if (is_leader_) return; // Leader maintains own path
+  if (is_leader_ && !is_kamikaze_mode_) return; 
+
+  if (is_kamikaze_mode_) {
+    // Attack logic: direct line to target with high speed
+    geometry_msgs::msg::PoseStamped cmd;
+    cmd.header.stamp = this->now();
+    cmd.header.frame_id = "map";
+    
+    // Dive towards target
+    cmd.pose.position = attack_target_;
+    
+    // In a real scenario, we would use velocity setpoints, 
+    // but here we publish the target as a setpoint.
+    cmd_pose_pub_->publish(cmd);
+    
+    // Simulate impact check
+    float dist = std::sqrt(std::pow(current_pose_.pose.position.x - attack_target_.x, 2) + 
+                           std::pow(current_pose_.pose.position.y - attack_target_.y, 2));
+    if (dist < 1.0) {
+      payload_manager_.release();
+      RCLCPP_INFO(this->get_logger(), "IMPACT DETECTED! Mission Accomplished.");
+      is_kamikaze_mode_ = false;
+    }
+    return;
+  }
 
   // Follower logic: maintain offset from leader
   if (swarm_members_.count(current_formation_.leader_id)) {

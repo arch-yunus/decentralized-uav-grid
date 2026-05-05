@@ -12,6 +12,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/FormationState.msg"
   "msg/MissionCommand.msg"
   "msg/ObstacleDistance.msg"
+  "msg/KamikazeCommand.msg"
   DEPENDENCIES geometry_msgs std_msgs
 )
 

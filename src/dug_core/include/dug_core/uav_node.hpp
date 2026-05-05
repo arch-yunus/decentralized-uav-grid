@@ -8,7 +8,9 @@
 #include <dug_msgs/msg/target_info.hpp>
 #include <dug_msgs/msg/mission_command.hpp>
 #include <dug_msgs/msg/obstacle_distance.hpp>
+#include <dug_msgs/msg/kamikaze_command.hpp>
 #include "dug_core/vfh_planner.hpp"
+#include "dug_core/payload_manager.hpp"
 
 namespace dug_core
 {
@@ -28,6 +30,8 @@ private:
   void obstacle_callback(const dug_msgs::msg::ObstacleDistance::SharedPtr msg);
   void mission_callback(const dug_msgs::msg::MissionCommand::SharedPtr msg);
   void vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+  void vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+  void kamikaze_callback(const dug_msgs::msg::KamikazeCommand::SharedPtr msg);
   void timer_callback();
 
   // Helper functions
@@ -43,6 +47,7 @@ private:
   rclcpp::Subscription<dug_msgs::msg::ObstacleDistance>::SharedPtr obstacle_sub_;
   rclcpp::Subscription<dug_msgs::msg::MissionCommand>::SharedPtr mission_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr vslam_sub_;
+  rclcpp::Subscription<dug_msgs::msg::KamikazeCommand>::SharedPtr kamikaze_sub_;
 
   // Publishers
   rclcpp::Publisher<dug_msgs::msg::SwarmState>::SharedPtr swarm_pub_;
@@ -70,6 +75,10 @@ private:
   geometry_msgs::msg::PoseStamped vslam_pose_;
   bool gps_healthy_;
   rclcpp::Time last_gps_time_;
+  
+  PayloadManager payload_manager_;
+  bool is_kamikaze_mode_;
+  geometry_msgs::msg::Point attack_target_;
 };
 
 } // namespace dug_core
