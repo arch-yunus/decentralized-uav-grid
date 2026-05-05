@@ -52,10 +52,12 @@ graph TD
     MAV <--> LDR
     CAM --> VIS[dug_vision]
     VIS --> LDR
+    VSLAM[Visual SLAM] --> LDR
     LDR <--> BAT
     BAT <--> ZT
     FORM --> NAV
     NAV --> MAV
+    MAV -- GPS Lost --> VSLAM
 ```
 
 ---
@@ -136,7 +138,7 @@ ros2 launch dug_simulation tactical_swarm.launch.py drone_count:=10
 - [x] **Faz 1:** Merkeziyetsiz haberleşme ve lider seçimi.
 - [x] **Faz 2:** Dinamik formasyon ve hedef senkronizasyonu.
 - [x] **Faz 3:** Engelden kaçınma (Obstacle Avoidance) ve VFH+ algoritması.
-- [ ] **Faz 4:** GNSS-Denied ortamlarda görsel navigasyon (SLAM).
+- [x] **Faz 4:** GNSS-Denied ortamlarda görsel navigasyon (SLAM).
 - [ ] **Faz 5:** Kamikaze ve mühimmat bırakma modülleri entegrasyonu.
 
 ---

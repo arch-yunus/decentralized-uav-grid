@@ -27,6 +27,7 @@ private:
   void formation_callback(const dug_msgs::msg::FormationState::SharedPtr msg);
   void obstacle_callback(const dug_msgs::msg::ObstacleDistance::SharedPtr msg);
   void mission_callback(const dug_msgs::msg::MissionCommand::SharedPtr msg);
+  void vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   void timer_callback();
 
   // Helper functions
@@ -41,6 +42,7 @@ private:
   rclcpp::Subscription<dug_msgs::msg::FormationState>::SharedPtr formation_sub_;
   rclcpp::Subscription<dug_msgs::msg::ObstacleDistance>::SharedPtr obstacle_sub_;
   rclcpp::Subscription<dug_msgs::msg::MissionCommand>::SharedPtr mission_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr vslam_sub_;
 
   // Publishers
   rclcpp::Publisher<dug_msgs::msg::SwarmState>::SharedPtr swarm_pub_;
@@ -64,6 +66,10 @@ private:
   
   VfhPlanner vfh_planner_;
   std::vector<float> latest_obstacles_;
+  
+  geometry_msgs::msg::PoseStamped vslam_pose_;
+  bool gps_healthy_;
+  rclcpp::Time last_gps_time_;
 };
 
 } // namespace dug_core

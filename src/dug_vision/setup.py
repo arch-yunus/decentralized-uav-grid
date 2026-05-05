@@ -19,7 +19,8 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "target_detector = dug_vision.target_detector:main"
+            "target_detector = dug_vision.target_detector:main",
+            "vslam_node = dug_vision.vslam_node:main"
         ],
     },
 )

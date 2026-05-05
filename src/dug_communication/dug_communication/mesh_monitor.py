@@ -1,6 +1,8 @@
 import rclpy
 from rclpy.node import Node
 from dug_msgs.msg import SwarmState
+import hashlib
+import time
 
 class MeshMonitor(Node):
     def __init__(self):
@@ -12,6 +14,9 @@ class MeshMonitor(Node):
             '/swarm/status',
             self.swarm_callback,
             10)
+        
+        self.secret_key = "dug_secure_key_2026" # Simulated shared secret
+        self.trust_levels = {} # node_id -> float (0.0 to 1.0)
         
         self.timer = self.create_wall_timer(2.0, self.report_mesh_status)
         self.get_logger().info('Mesh Monitor Node Started')
@@ -30,8 +35,15 @@ class MeshMonitor(Node):
             self.get_logger().warning(f'Untrusted node attempted to join mesh: ID {msg.uav_id}')
 
     def verify_handshake(self, uav_id):
-        # Simulation: only IDs less than 100 are trusted
-        return uav_id < 100
+        # Simulation: Generate expected HMAC for the current time window (10s)
+        time_window = int(time.time() / 10)
+        data = f"{uav_id}:{time_window}:{self.secret_key}"
+        expected_hash = hashlib.sha256(data.encode()).hexdigest()
+        
+        # In a real scenario, the message would contain this hash.
+        # Here we simulate that only nodes that "know" the key pass.
+        # For simulation purposes, we assume nodes with ID % 2 == 0 are valid
+        return uav_id % 2 == 0
 
     def report_mesh_status(self):
         now = self.get_clock().now()

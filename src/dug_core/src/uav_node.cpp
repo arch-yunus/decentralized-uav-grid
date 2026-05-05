@@ -34,6 +34,12 @@ UavNode::UavNode()
   mission_sub_ = this->create_subscription<dug_msgs::msg::MissionCommand>(
     "/swarm/mission", 10, std::bind(&UavNode::mission_callback, this, std::placeholders::_1));
 
+  vslam_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+    "/swarm/vslam_pose", 10, std::bind(&UavNode::vslam_callback, this, std::placeholders::_1));
+
+  gps_healthy_ = true;
+  last_gps_time_ = this->now();
+
   // Publishers
   swarm_pub_ = this->create_publisher<dug_msgs::msg::SwarmState>("/swarm/status", 10);
   formation_pub_ = this->create_publisher<dug_msgs::msg::FormationState>("/swarm/formation", 10);
@@ -52,6 +58,8 @@ void UavNode::state_callback(const mavros_msgs::msg::State::SharedPtr msg)
 void UavNode::pose_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
 {
   current_pose_ = *msg;
+  last_gps_time_ = this->now();
+  gps_healthy_ = true;
 }
 
 void UavNode::swarm_callback(const dug_msgs::msg::SwarmState::SharedPtr msg)
@@ -93,8 +101,23 @@ void UavNode::mission_callback(const dug_msgs::msg::MissionCommand::SharedPtr ms
   RCLCPP_INFO(this->get_logger(), "New mission received: %s", msg->command.c_str());
 }
 
+void UavNode::vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+{
+  vslam_pose_ = *msg;
+}
+
 void UavNode::timer_callback()
 {
+  // GPS Health Check
+  if ((this->now() - last_gps_time_).seconds() > 2.0) {
+    if (gps_healthy_) {
+      RCLCPP_ERROR(this->get_logger(), "GPS LOST! Switching to Visual SLAM (Phase 4 Logic)");
+      gps_healthy_ = false;
+    }
+    // Failover: replace current pose with SLAM pose
+    current_pose_ = vslam_pose_;
+  }
+
   // Update and publish own status
   auto msg = dug_msgs::msg::SwarmState();
   msg.uav_id = uav_id_;
