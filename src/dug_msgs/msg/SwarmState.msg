@@ -2,3 +2,6 @@ uint32 uav_id
 bool is_leader
 float32 battery_percentage
 geometry_msgs/PoseStamped current_pose
+string signature
+uint32 connectivity_degree
+float32 hardware_load

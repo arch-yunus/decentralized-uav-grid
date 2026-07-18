@@ -30,13 +30,14 @@ private:
   void obstacle_callback(const dug_msgs::msg::ObstacleDistance::SharedPtr msg);
   void mission_callback(const dug_msgs::msg::MissionCommand::SharedPtr msg);
   void vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
-  void vslam_callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   void kamikaze_callback(const dug_msgs::msg::KamikazeCommand::SharedPtr msg);
   void timer_callback();
 
   // Helper functions
   void select_leader();
   void perform_formation_control();
+  std::string compute_hash_signature(uint32_t uav_id);
+  bool verify_peer_signature(uint32_t uav_id, const std::string& signature);
 
   // Subscriptions
   rclcpp::Subscription<mavros_msgs::msg::State>::SharedPtr state_sub_;
@@ -65,6 +66,7 @@ private:
   geometry_msgs::msg::PoseStamped current_pose_;
   
   std::map<uint32_t, dug_msgs::msg::SwarmState> swarm_members_;
+  std::map<uint32_t, rclcpp::Time> last_seen_peers_;
   std::vector<dug_msgs::msg::TargetInfo> global_targets_;
   dug_msgs::msg::FormationState current_formation_;
   dug_msgs::msg::MissionCommand current_mission_;

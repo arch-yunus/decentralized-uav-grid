@@ -8,7 +8,7 @@ class VSLAMNode(Node):
     def __init__(self):
         super().__init__('vslam_node')
         
-        self.publisher_ = self.create_publisher(PoseStamped, '/swarm/vslam_pose', 10)
+        self.publisher_ = self.create_publisher(PoseStamped, 'vslam_pose', 10)
         self.timer = self.create_wall_timer(0.1, self.publish_vslam_pose) # 10Hz
         
         # Internal state for simulation

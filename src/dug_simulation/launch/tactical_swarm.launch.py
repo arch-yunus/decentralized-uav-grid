@@ -1,16 +1,51 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction, OpaqueFunction
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, PushRosNamespace
 
+def launch_setup(context, *args, **kwargs):
+    # Read the drone_count argument from context
+    drone_count = int(LaunchConfiguration('drone_count').perform(context))
+    
+    actions = []
+    
+    for i in range(drone_count):
+        uav_id = i + 1
+        namespace = f'uav_{uav_id}'
+        
+        actions.append(GroupAction([
+            PushRosNamespace(namespace),
+            Node(
+                package='dug_core',
+                executable='uav_node',
+                name='uav_node',
+                parameters=[{'uav_id': uav_id}],
+                output='screen'
+            ),
+            # Vision node for each UAV
+            Node(
+                package='dug_vision',
+                executable='target_detector',
+                name='target_detector',
+                output='screen'
+            ),
+            # VSLAM node for each UAV
+            Node(
+                package='dug_vision',
+                executable='vslam_node',
+                name='vslam_node',
+                output='screen'
+            )
+        ]))
+        
+    return actions
+
 def generate_launch_description():
     # Paths
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
-    pkg_dug_core = get_package_share_directory('dug_core')
-    pkg_dug_comm = get_package_share_directory('dug_communication')
     
     # Launch arguments
     drone_count_arg = DeclareLaunchArgument(
@@ -39,31 +74,7 @@ def generate_launch_description():
         output='screen'
     ))
 
-    # Spawning UAV Nodes
-    # Note: LaunchConfiguration is not directly iterable in Python logic during generation.
-    # We usually use a fixed maximum or a script that generates launch files.
-    # For demonstration, we'll spawn a few nodes manually or assume 5.
-    
-    for i in range(5):
-        uav_id = i + 1
-        namespace = f'uav_{uav_id}'
-        
-        ld.add_action(GroupAction([
-            PushRosNamespace(namespace),
-            Node(
-                package='dug_core',
-                executable='uav_node',
-                name='uav_node',
-                parameters=[{'uav_id': uav_id}],
-                output='screen'
-            ),
-            # Vision node for each UAV
-            Node(
-                package='dug_vision',
-                executable='target_detector',
-                name='target_detector',
-                output='screen'
-            )
-        ]))
+    # Dynamic Spawning via OpaqueFunction
+    ld.add_action(OpaqueFunction(function=launch_setup))
 
     return ld

@@ -22,9 +22,7 @@ class MeshMonitor(Node):
         self.get_logger().info('Mesh Monitor Node Started')
 
     def swarm_callback(self, msg):
-        # Zero-Trust Handshake Simulation
-        # In a real scenario, we would check cryptographic signatures here
-        is_trusted = self.verify_handshake(msg.uav_id)
+        is_trusted = self.verify_handshake(msg.uav_id, msg.signature)
         
         if is_trusted:
             self.peers[msg.uav_id] = {
@@ -32,18 +30,17 @@ class MeshMonitor(Node):
                 'trusted': True
             }
         else:
-            self.get_logger().warning(f'Untrusted node attempted to join mesh: ID {msg.uav_id}')
+            self.get_logger().warning(f'Untrusted node attempted to join mesh: ID {msg.uav_id} (Signature: {msg.signature})')
 
-    def verify_handshake(self, uav_id):
-        # Simulation: Generate expected HMAC for the current time window (10s)
+    def verify_handshake(self, uav_id, signature):
+        # Generate expected HMAC for the current time window (10s) and neighboring windows
         time_window = int(time.time() / 10)
-        data = f"{uav_id}:{time_window}:{self.secret_key}"
-        expected_hash = hashlib.sha256(data.encode()).hexdigest()
-        
-        # In a real scenario, the message would contain this hash.
-        # Here we simulate that only nodes that "know" the key pass.
-        # For simulation purposes, we assume nodes with ID % 2 == 0 are valid
-        return uav_id % 2 == 0
+        for offset in [0, -1, 1]:
+            data = f"{uav_id}:{time_window + offset}:{self.secret_key}"
+            expected_hash = hashlib.sha256(data.encode()).hexdigest()
+            if expected_hash == signature:
+                return True
+        return False
 
     def report_mesh_status(self):
         now = self.get_clock().now()
